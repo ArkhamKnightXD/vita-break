@@ -1,5 +1,6 @@
 #include <psp2/kernel/processmgr.h>
 #include <SDL2/SDL.h>
+#include <vector>
 
 // Screen dimension constants
 enum {
@@ -11,10 +12,47 @@ SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 SDL_GameController* controller = NULL;
 
-SDL_Rect rectangle = {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 32, 32};
-
-const int SPEED = 600; // Lower speed for testing
 const int FRAME_RATE = 60; // Desired frame rate (frames per second)
+
+SDL_Rect player;
+SDL_Rect ball;
+
+int playerSpeed = 800;
+int ballVelocityX = 425;
+int ballVelocityY = 425;
+
+typedef struct
+{
+    SDL_Rect bounds;
+    bool isDestroyed;
+} Brick;
+
+std::vector<Brick> bricks;
+
+std::vector<Brick> createBricks()
+{
+    std::vector<Brick> bricks;
+
+    int positionX;
+    int positionY = 40;
+
+    for (int i = 0; i < 8; i++)
+    {
+        positionX = 0;
+
+        for (int j = 0; j < 15; j++)
+        {
+            Brick actualBrick = {{positionX, positionY, 60, 20}, false};
+
+            bricks.push_back(actualBrick);
+            positionX += 64;
+        }
+
+        positionY += 22;
+    }
+
+    return bricks;
+}
  
 
 // Exit the game and clean up
@@ -27,13 +65,23 @@ void quitGame() {
 
 // Function to handle events
 void handleEvents() {
+
     SDL_Event event;
+
     while (SDL_PollEvent(&event)) {
+
         if (event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)) {
+
             quitGame();
             exit(0);
         }
     }
+}
+
+bool hasCollision(SDL_Rect bounds, SDL_Rect ball)
+{
+    return bounds.x < ball.x + ball.w && bounds.x + bounds.w > ball.x &&
+           bounds.y < ball.y + ball.h && bounds.y + bounds.h > ball.y;
 }
  
 // Function to update rectangle movement
@@ -41,36 +89,69 @@ void update(float deltaTime) {
 
     SDL_GameControllerUpdate();
 
-    if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_UP) && rectangle.y > 0) {
-        rectangle.y -= SPEED * deltaTime;
+    if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT) && player.x > 0) {
+        player.x -= playerSpeed * deltaTime;
     }
 
-    else if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN) && rectangle.y < SCREEN_HEIGHT - rectangle.h) {
-        rectangle.y += SPEED * deltaTime;
+    else if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT) && player.x < SCREEN_WIDTH - player.w) {
+        player.x += playerSpeed * deltaTime;
     }
 
-    else if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT) && rectangle.x > 0) {
-        rectangle.x -= SPEED * deltaTime;
+    if (ball.y > SCREEN_HEIGHT + ball.h)
+    {
+        ball.x = SCREEN_WIDTH / 2 - ball.w;
+        ball.y = SCREEN_HEIGHT / 2 - ball.h;
+
+        ballVelocityX *= -1;
     }
 
-    else if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT) && rectangle.x < SCREEN_WIDTH - rectangle.w) {
-        rectangle.x += SPEED * deltaTime;
+    if (ball.y < 0)
+    {
+        ballVelocityY *= -1;
     }
+    
+    if (ball.x < 0 || ball.x > SCREEN_WIDTH - ball.w)
+    {
+        ballVelocityX *= -1;
+    }
+
+    if (hasCollision(player, ball))
+    {
+        ballVelocityY *= -1;
+    }
+
+    for (unsigned int i = 0; i < bricks.size(); i++)
+    {
+        if (!bricks[i].isDestroyed && hasCollision(bricks[i].bounds, ball))
+        {
+            ballVelocityY *= -1;
+            bricks[i].isDestroyed = true;
+        }
+    }
+
+    ball.x += ballVelocityX * deltaTime;
+    ball.y += ballVelocityY * deltaTime;
 }
 
 // Function to render graphics
 void render() {
-    // Clear the renderer
+    
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
-    // Set drawing color to white
+    SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
+
+    for (Brick brick : bricks)
+    {
+        if (!brick.isDestroyed)
+            SDL_RenderFillRect(renderer, &brick.bounds);
+    }
+
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
-    // Render the rectangle
-    SDL_RenderFillRect(renderer, &rectangle);
+    SDL_RenderFillRect(renderer, &player);
+    SDL_RenderFillRect(renderer, &ball);
 
-    // Present the renderer
     SDL_RenderPresent(renderer);
 }
 
@@ -107,6 +188,12 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
+
+    bricks = createBricks();
+
+    player = {SCREEN_WIDTH / 2, SCREEN_HEIGHT - 32, 74, 16};
+
+    ball = {SCREEN_WIDTH / 2 - 20, SCREEN_HEIGHT / 2 - 20, 20, 20};
 
     Uint32 previousFrameTime = SDL_GetTicks();
     Uint32 currentFrameTime;
