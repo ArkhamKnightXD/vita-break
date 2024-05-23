@@ -12,10 +12,8 @@ SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 SDL_GameController* controller = NULL;
 
-const int FRAME_RATE = 60; // Desired frame rate (frames per second)
-
-SDL_Rect player;
-SDL_Rect ball;
+SDL_Rect player = {SCREEN_WIDTH / 2, SCREEN_HEIGHT - 32, 74, 16};
+SDL_Rect ball = {SCREEN_WIDTH / 2 - 20, SCREEN_HEIGHT / 2 - 20, 20, 20};
 
 int playerSpeed = 800;
 int ballVelocityX = 425;
@@ -28,8 +26,6 @@ typedef struct
     SDL_Rect bounds;
     bool isDestroyed;
 } Brick;
-
-std::vector<Brick> bricks;
 
 std::vector<Brick> createBricks()
 {
@@ -55,9 +51,9 @@ std::vector<Brick> createBricks()
 
     return bricks;
 }
- 
 
-// Exit the game and clean up
+std::vector<Brick> bricks = createBricks();
+
 void quitGame() {
 
     SDL_GameControllerClose(controller);
@@ -66,7 +62,6 @@ void quitGame() {
     SDL_Quit();
 }
 
-// Function to handle events
 void handleEvents() { 
 
     SDL_Event event;
@@ -87,7 +82,6 @@ bool hasCollision(SDL_Rect bounds, SDL_Rect ball)
            bounds.y < ball.y + ball.h && bounds.y + bounds.h > ball.y;
 }
  
-// Function to update rectangle movement
 void update(float deltaTime) {
 
     SDL_GameControllerUpdate();
@@ -146,7 +140,6 @@ void update(float deltaTime) {
     ball.y += ballVelocityY * deltaTime;
 }
 
-// Function to render graphics
 void render() {
     
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -167,6 +160,8 @@ void render() {
 
     SDL_RenderPresent(renderer);
 }
+
+const int FRAME_RATE = 60;
 
 void capFrameRate(Uint32 frameStartTime) {
 
@@ -194,7 +189,9 @@ int main(int argc, char *argv[])
     if (SDL_NumJoysticks() < 1) {
         printf("No game controllers connected!\n");
         return -1;
-    } else {
+    } 
+    else {
+
         controller = SDL_GameControllerOpen(0);
         if (controller == NULL) {
             printf("Unable to open game controller! SDL Error: %s\n", SDL_GetError());
@@ -202,17 +199,10 @@ int main(int argc, char *argv[])
         }
     }
 
-    bricks = createBricks();
-
-    player = {SCREEN_WIDTH / 2, SCREEN_HEIGHT - 32, 74, 16};
-
-    ball = {SCREEN_WIDTH / 2 - 20, SCREEN_HEIGHT / 2 - 20, 20, 20};
-
     Uint32 previousFrameTime = SDL_GetTicks();
     Uint32 currentFrameTime;
     float deltaTime;
 
-    // Main loop
     while (1) {
 
         currentFrameTime = SDL_GetTicks();
