@@ -2,7 +2,6 @@
 #include <SDL2/SDL.h>
 #include <vector>
 
-// Screen dimension constants
 enum {
   SCREEN_WIDTH  = 960,
   SCREEN_HEIGHT = 544
@@ -86,12 +85,12 @@ void update(float deltaTime) {
 
     SDL_GameControllerUpdate();
 
-    if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_UP))
+    if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_START))
     {
         isAutoPlayMode = !isAutoPlayMode;
     }
 
-    if (isAutoPlayMode)
+    if (isAutoPlayMode && ball.x < SCREEN_WIDTH - player.w)
     {
         player.x = ball.x;
     }
