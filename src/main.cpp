@@ -20,25 +20,25 @@ int ballVelocityY = 425;
 
 bool isAutoPlayMode = false;
 
-typedef struct
-{
+typedef struct {
+
     SDL_Rect bounds;
     bool isDestroyed;
 } Brick;
 
-std::vector<Brick> createBricks()
-{
+std::vector<Brick> createBricks() {
+
     std::vector<Brick> bricks;
 
     int positionX;
     int positionY = 40;
 
-    for (int i = 0; i < 8; i++)
-    {
+    for (int row = 0; row < 8; row++) {
+
         positionX = 0;
 
-        for (int j = 0; j < 15; j++)
-        {
+        for (int column = 0; column < 15; column++) {
+
             Brick actualBrick = {{positionX, positionY, 60, 20}, false};
 
             bricks.push_back(actualBrick);
@@ -75,8 +75,8 @@ void handleEvents() {
     }
 }
 
-bool hasCollision(SDL_Rect bounds, SDL_Rect ball)
-{
+bool hasCollision(SDL_Rect bounds, SDL_Rect ball) {
+
     return bounds.x < ball.x + ball.w && bounds.x + bounds.w > ball.x &&
            bounds.y < ball.y + ball.h && bounds.y + bounds.h > ball.y;
 }
@@ -85,13 +85,11 @@ void update(float deltaTime) {
 
     SDL_GameControllerUpdate();
 
-    if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_START))
-    {
+    if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_START)) {
         isAutoPlayMode = !isAutoPlayMode;
     }
 
-    if (isAutoPlayMode && ball.x < SCREEN_WIDTH - player.w)
-    {
+    if (isAutoPlayMode && ball.x < SCREEN_WIDTH - player.w) {
         player.x = ball.x;
     }
 
@@ -103,33 +101,30 @@ void update(float deltaTime) {
         player.x += playerSpeed * deltaTime;
     }
 
-    if (ball.y > SCREEN_HEIGHT + ball.h)
-    {
+    if (ball.y > SCREEN_HEIGHT + ball.h) {
+
         ball.x = SCREEN_WIDTH / 2 - ball.w;
         ball.y = SCREEN_HEIGHT / 2 - ball.h;
 
         ballVelocityX *= -1;
     }
 
-    if (ball.y < 0)
-    {
+    if (ball.y < 0) {
         ballVelocityY *= -1;
     }
     
-    if (ball.x < 0 || ball.x > SCREEN_WIDTH - ball.w)
-    {
+    if (ball.x < 0 || ball.x > SCREEN_WIDTH - ball.w) {
         ballVelocityX *= -1;
     }
 
-    if (hasCollision(player, ball))
-    {
+    if (hasCollision(player, ball)) {
         ballVelocityY *= -1;
     }
 
-    for (unsigned int i = 0; i < bricks.size(); i++)
-    {
-        if (!bricks[i].isDestroyed && hasCollision(bricks[i].bounds, ball))
-        {
+    for (unsigned int i = 0; i < bricks.size(); i++) {
+
+        if (!bricks[i].isDestroyed && hasCollision(bricks[i].bounds, ball)) {
+
             ballVelocityY *= -1;
             bricks[i].isDestroyed = true;
         }
@@ -146,8 +141,8 @@ void render() {
 
     SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
 
-    for (Brick brick : bricks)
-    {
+    for (Brick brick : bricks) {
+
         if (!brick.isDestroyed)
             SDL_RenderFillRect(renderer, &brick.bounds);
     }
@@ -177,7 +172,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    if ((window = SDL_CreateWindow("RedRectangle", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN)) == NULL) {
+    if ((window = SDL_CreateWindow("Breakout", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN)) == NULL) {
         return -1;
     }
 
@@ -216,5 +211,4 @@ int main(int argc, char *argv[])
     }
 
     quitGame();
-    return 0;
 }
