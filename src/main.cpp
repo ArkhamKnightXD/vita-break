@@ -151,17 +151,6 @@ void render() {
     SDL_RenderPresent(renderer);
 }
 
-const int FRAME_RATE = 60;
-
-void capFrameRate(Uint32 frameStartTime) {
-
-    Uint32 frameTime = SDL_GetTicks() - frameStartTime;
-    
-    if (frameTime < 1000 / FRAME_RATE) {
-        SDL_Delay(1000 / FRAME_RATE - frameTime);
-    }
-}
-
 int main()
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
@@ -193,7 +182,7 @@ int main()
     Uint32 currentFrameTime;
     float deltaTime;
 
-    while (1) {
+    while (true) {
 
         currentFrameTime = SDL_GetTicks();
         deltaTime = (currentFrameTime - previousFrameTime) / 1000.0f;
@@ -202,8 +191,6 @@ int main()
         handleEvents();
         update(deltaTime);
         render();
-
-        capFrameRate(currentFrameTime);
     }
 
     quitGame();
