@@ -1,43 +1,46 @@
-cmake_minimum_required(VERSION 3.2)
-
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  if(DEFINED ENV{VITASDK})
-    set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "toolchain file")
-  else()
-    message(FATAL_ERROR "Please define VITASDK to point to your SDK path!")
-  endif()
-endif()
+cmake_minimum_required(VERSION 3.10)
 
 project(breakout)
-include("${VITASDK}/share/vita.cmake" REQUIRED)
 
-find_package(SDL2 REQUIRED)
+add_executable(${PROJECT_NAME} main.cpp)
 
-set(VITA_APP_NAME "Breakout")
-set(VITA_TITLEID  "VSDK00017")
-set(VITA_VERSION  "01.00")
+include(FindPkgConfig)
+pkg_search_module(SDL2 REQUIRED sdl2)
+pkg_search_module(SDL2_MIXER REQUIRED SDL2_mixer)
+pkg_search_module(SDL2_TTF REQUIRED SDL2_ttf)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
-include_directories(
-  ../common
+target_link_libraries(${PROJECT_NAME} PRIVATE
+	${SDL2_LIBRARIES}
+    ${SDL2_MIXER_LIBRARIES}
+	${SDL2_TTF_LIBRARIES}
+	SDL2main
 )
 
-add_executable(${PROJECT_NAME}
-  src/main.cpp
-)
+if(PLATFORM_PSP)
+	create_pbp_file(
+		TARGET ${PROJECT_NAME}
+		ICON_PATH NULL
+		BACKGROUND_PATH NULL
+		PREVIEW_PATH NULL
+		TITLE ${PROJECT_NAME}
+	)
+elseif(VITA)
+	set(VITA_TITLEID "BREAK0003") #Title length == 9
 
-target_link_libraries(${PROJECT_NAME}
-  SDL2::SDL2
-)
+	include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
 
-vita_create_self(${PROJECT_NAME}.self ${PROJECT_NAME})
-vita_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} ${PROJECT_NAME}.self
-  VERSION ${VITA_VERSION}
-  NAME ${VITA_APP_NAME}
-  FILE sce_sys/icon0.png sce_sys/icon0.png
-  FILE sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
-  FILE sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
-  FILE sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
-)
+	vita_create_self(${PROJECT_NAME}.self ${PROJECT_NAME})
+	vita_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} ${PROJECT_NAME}.self
+		VERSION "01.00"
+		NAME ${PROJECT_NAME}
+		FILE platform/vita/sce_sys sce_sys
+		FILE res/fonts/square_sans_serif_7.ttf square_sans_serif_7.ttf
+		FILE res/sounds/drop.wav drop.wav
+		FILE res/sounds/magic.wav magic.wav
+	)
+endif()
+
+file(COPY res/fonts/square_sans_serif_7.ttf DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY res/sounds/drop.wav DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY res/sounds/magic.wav DESTINATION ${CMAKE_BINARY_DIR})
+
