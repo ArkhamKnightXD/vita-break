@@ -323,8 +323,6 @@ int main(int argc, char *args[]) {
     Uint32 currentFrameTime = previousFrameTime;
     float deltaTime = 0.0f;
 
-    srand(time(NULL));
-
     while (true)
     {
         currentFrameTime = SDL_GetTicks();
